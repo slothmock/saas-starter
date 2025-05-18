@@ -12,38 +12,38 @@ export default async function PricingPage() {
     getStripeProducts(),
   ]);
 
-  const basePlan = products.find((product) => product.name === 'Base');
-  const plusPlan = products.find((product) => product.name === 'Plus');
+  const monthlyPlan = products.find((product) => product.name === 'Monthly');
+  const annualPlan = products.find((product) => product.name === 'Annual');
 
-  const basePrice = prices.find((price) => price.productId === basePlan?.id);
-  const plusPrice = prices.find((price) => price.productId === plusPlan?.id);
+  const monthlyPrice = prices.find((price) => price.productId === monthlyPlan?.id);
+  const annualPrice = prices.find((price) => price.productId === annualPlan?.id);
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="grid md:grid-cols-2 gap-8 max-w-xl mx-auto">
+      <div className="grid md:grid-cols-2 gap-8 max-w-2xl mx-auto">
         <PricingCard
-          name={basePlan?.name || 'Base'}
-          price={basePrice?.unitAmount || 800}
-          interval={basePrice?.interval || 'month'}
-          trialDays={basePrice?.trialPeriodDays || 7}
+          name={monthlyPlan?.name || 'Monthly'}
+          price={monthlyPrice?.unitAmount || 99}
+          interval={monthlyPrice?.interval || 'month'}
+          trialDays={monthlyPrice?.trialPeriodDays || 7}
           features={[
-            'Unlimited Usage',
-            'Unlimited Workspace Members',
+            'Weekly SMS Reminders',
+            'Add multiple numbers per household (99p charge)',
             'Email Support',
+            'Cancel anytime'
           ]}
-          priceId={basePrice?.id}
+          priceId={monthlyPrice?.id}
         />
         <PricingCard
-          name={plusPlan?.name || 'Plus'}
-          price={plusPrice?.unitAmount || 1200}
-          interval={plusPrice?.interval || 'month'}
-          trialDays={plusPrice?.trialPeriodDays || 7}
+          name={annualPlan?.name || 'Annual'}
+          price={annualPrice?.unitAmount || 999}
+          interval={annualPrice?.interval || 'annual'}
+          trialDays={annualPrice?.trialPeriodDays || 7}
           features={[
             'Everything in Base, and:',
-            'Early Access to New Features',
-            '24/7 Support + Slack Access',
+            '2 months completely free',
           ]}
-          priceId={plusPrice?.id}
+          priceId={annualPrice?.id}
         />
       </div>
     </main>
@@ -69,12 +69,12 @@ function PricingCard({
     <div className="pt-6">
       <h2 className="text-2xl font-medium text-gray-900 mb-2">{name}</h2>
       <p className="text-sm text-gray-600 mb-4">
-        with {trialDays} day free trial
+        with a {trialDays} day free trial
       </p>
       <p className="text-4xl font-medium text-gray-900 mb-6">
-        ${price / 100}{' '}
+        £{price / 100}{' '}
         <span className="text-xl font-normal text-gray-600">
-          per user / {interval}
+          per number / {interval}
         </span>
       </p>
       <ul className="space-y-4 mb-8">
