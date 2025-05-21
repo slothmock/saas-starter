@@ -20,15 +20,14 @@ export default async function PricingPage() {
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="grid md:grid-cols-2 gap-8 max-w-2xl mx-auto">
+      <div className="grid md:grid-cols-2 gap-20 max-w-2xl mx-auto">
         <PricingCard
           name={monthlyPlan?.name || 'Monthly'}
           price={monthlyPrice?.unitAmount || 99}
           interval={monthlyPrice?.interval || 'month'}
-          trialDays={monthlyPrice?.trialPeriodDays || 7}
+          trialDays={monthlyPrice?.trialPeriodDays || 14}
           features={[
             'Weekly SMS Reminders',
-            'Add multiple numbers per household (99p charge)',
             'Email Support',
             'Cancel anytime'
           ]}
@@ -41,7 +40,7 @@ export default async function PricingPage() {
           trialDays={annualPrice?.trialPeriodDays || 7}
           features={[
             'Everything in Base, and:',
-            '2 months completely free',
+            '2 months completely free!',
           ]}
           priceId={annualPrice?.id}
         />
@@ -65,8 +64,9 @@ function PricingCard({
   features: string[];
   priceId?: string;
 }) {
-  return (
-    <div className="pt-6">
+return (
+  <div className="flex flex-col justify-between h-full pt-6 border border-orange-500 shadow-lg rounded-lg p-6 bg-white">
+    <div>
       <h2 className="text-2xl font-medium text-gray-900 mb-2">{name}</h2>
       <p className="text-sm text-gray-600 mb-4">
         with a {trialDays} day free trial
@@ -74,7 +74,7 @@ function PricingCard({
       <p className="text-4xl font-medium text-gray-900 mb-6">
         £{price / 100}{' '}
         <span className="text-xl font-normal text-gray-600">
-          per number / {interval}
+          / {interval}
         </span>
       </p>
       <ul className="space-y-4 mb-8">
@@ -85,10 +85,12 @@ function PricingCard({
           </li>
         ))}
       </ul>
-      <form action={checkoutAction}>
-        <input type="hidden" name="priceId" value={priceId} />
-        <SubmitButton />
-      </form>
     </div>
-  );
+    <form action={checkoutAction}>
+      <input type="hidden" name="priceId" value={priceId} />
+      <SubmitButton className="w-full bg-orange-500 text-white hover:text-white cursor-pointer py-3 rounded-lg mt-4 hover:bg-orange-600 transition" />
+    </form>
+  </div>
+);
+
 }
