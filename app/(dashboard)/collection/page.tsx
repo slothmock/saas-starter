@@ -1,37 +1,25 @@
 import { notFound } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
+import { getAddressByUprn } from '@/lib/supabase';
 import { getCollectionInfo } from '@/lib/getCollectionInfo';
-import BinCollectionClient from './BinCollectionClient';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import BinCollectionClient from '@/components/ui/BinCollectionClient';
 
 interface PageProps {
-  searchParams: { uprn?: string };
+  searchParams?: Record<string, string | string[] | undefined>;
 }
 
 export default async function CollectionPage({ searchParams }: PageProps) {
-  const uprn = searchParams?.uprn;
-
+  const uprn = typeof searchParams?.uprn === 'string' ? searchParams.uprn : undefined;
   if (!uprn) return notFound();
 
-  // Fetch address
-  const { data: addressData, error } = await supabase
-    .from('collection_addresses')
-    .select('address_text')
-    .eq('uprn', uprn)
-    .single();
-
-  if (error || !addressData) return notFound();
+  const address = await getAddressByUprn(uprn);
+  if (!address) return notFound();
 
   const collection = await getCollectionInfo(uprn);
 
   return (
     <section className="y-20 mt-8 m-4">
       <h2 className="text-2xl font-semibold mb-2">Next Bin Collection</h2>
-      <p className="text-gray-700 mb-6">{addressData.address_text}</p>
+      <p className="text-gray-700 mb-6">{address}</p>
 
       {collection ? (
         <BinCollectionClient bins={collection.bins} uprn={uprn} />
@@ -39,5 +27,6 @@ export default async function CollectionPage({ searchParams }: PageProps) {
         <p className="text-gray-500">No upcoming collections found for this address.</p>
       )}
     </section>
-  );
-}
+  )
+};
+
