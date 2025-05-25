@@ -4,10 +4,11 @@ import { getCollectionInfo } from '@/lib/getCollectionInfo';
 import BinCollectionClient from '@/components/ui/BinCollectionClient';
 
 interface PageProps {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
-export default async function CollectionPage({ searchParams }: PageProps) {
+export default async function CollectionPage(props: PageProps) {
+  const searchParams = await props.searchParams;
   const uprn = typeof searchParams?.uprn === 'string' ? searchParams.uprn : undefined;
   if (!uprn) return notFound();
 

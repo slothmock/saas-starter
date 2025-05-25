@@ -4,19 +4,21 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 
 type Params = {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 };
 
-export async function generateMetadata({ params }: Params): Promise<Metadata> {
+export async function generateMetadata(props: Params): Promise<Metadata> {
+  const params = await props.params;
   const promise = await Promise.resolve(params);
   return {
     title: `${toTitleCase(promise.slug.replace(/-/g, ' '))} | PembsWasteSMS`,
   };
 }
 
-export default async function LegalPage({ params }: Params) {
+export default async function LegalPage(props: Params) {
+  const params = await props.params;
   try {
     const promise = await Promise.resolve(params);
     const content = await getMarkdownContent(promise.slug);
