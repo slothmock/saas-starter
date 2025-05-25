@@ -8,9 +8,12 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default async function CollectionPage({ searchParams }: { searchParams: { uprn?: string } }) {
-  const params = await searchParams;
-  const uprn = params?.uprn;
+interface PageProps {
+  searchParams: { uprn?: string };
+}
+
+export default async function CollectionPage({ searchParams }: PageProps) {
+  const uprn = searchParams?.uprn;
 
   if (!uprn) return notFound();
 

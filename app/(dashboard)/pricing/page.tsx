@@ -6,14 +6,17 @@ import { SubmitButton } from './submit-button';
 // Prices are fresh for one hour max
 export const revalidate = 3600;
 
-export default async function PricingPage( {searchParams }: { searchParams: { uprn: string }}) {
+interface PageProps {
+  searchParams: { uprn?: string };
+}
+
+export default async function PricingPage({ searchParams }: PageProps) {
   const [prices, products] = await Promise.all([
     getStripePrices(),
     getStripeProducts(),
   ]);
-
-  const params = await searchParams;
-  const uprn = params?.uprn;
+  
+  const uprn = searchParams?.uprn;
 
   console.log(uprn)
 
