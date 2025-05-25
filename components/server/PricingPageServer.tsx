@@ -2,13 +2,12 @@
 
 import { getStripePrices, getStripeProducts } from '@/lib/payments/stripe';
 import PricingCard from '../ui/PricingCard';
-import { number } from 'zod';
 
 export async function revalidate() {
     return 3600;
 }
 
-export default async function PricingPageServer({ uprn }: { uprn?: string }) {
+export async function PricingPageServer({ uprn }: { uprn?: string }) {
   const [prices, products] = await Promise.all([
     getStripePrices(),
     getStripeProducts(),

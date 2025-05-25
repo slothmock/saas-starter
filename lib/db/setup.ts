@@ -6,6 +6,10 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 import os from 'node:os';
 
+const mode = process.argv.includes('--prod') ? 'production' : 'local';
+const isProd = mode === 'production';
+console.log(`Running setup in [${isProd ? 'Production' : 'Development'} Mode]`);
+
 const execAsync = promisify(exec);
 
 function question(query: string): Promise<string> {
@@ -23,103 +27,65 @@ function question(query: string): Promise<string> {
 }
 
 async function checkStripeCLI() {
-  console.log(
-    'Step 1: Checking if Stripe CLI is installed and authenticated...'
-  );
+  console.log('Step 1: Checking if Stripe CLI is installed and authenticated...');
   try {
     await execAsync('stripe --version');
-    console.log('Stripe CLI is installed.');
+    console.log('✅ Stripe CLI is installed.');
 
-    // Check if Stripe CLI is authenticated
     try {
       await execAsync('stripe config --list');
-      console.log('Stripe CLI is authenticated.');
-    } catch (error) {
-      console.log(
-        'Stripe CLI is not authenticated or the authentication has expired.'
-      );
-      console.log('Please run: stripe login');
-      const answer = await question(
-        'Have you completed the authentication? (y/n): '
-      );
+      console.log('✅ Stripe CLI is authenticated.');
+    } catch {
+      console.log('❌ Stripe CLI is not authenticated or has expired.');
+      console.log('Run: stripe login');
+      const answer = await question('Have you completed the authentication? (y/n): ');
       if (answer.toLowerCase() !== 'y') {
-        console.log(
-          'Please authenticate with Stripe CLI and run this script again.'
-        );
+        console.log('Please authenticate and re-run the script.');
         process.exit(1);
       }
 
-      // Verify authentication after user confirms login
       try {
         await execAsync('stripe config --list');
-        console.log('Stripe CLI authentication confirmed.');
-      } catch (error) {
-        console.error(
-          'Failed to verify Stripe CLI authentication. Please try again.'
-        );
+        console.log('✅ Stripe CLI authentication confirmed.');
+      } catch {
+        console.error('❌ Authentication still not valid. Try again.');
         process.exit(1);
       }
     }
-  } catch (error) {
-    console.error(
-      'Stripe CLI is not installed. Please install it and try again.'
-    );
-    console.log('To install Stripe CLI, follow these steps:');
-    console.log('1. Visit: https://docs.stripe.com/stripe-cli');
-    console.log(
-      '2. Download and install the Stripe CLI for your operating system'
-    );
-    console.log('3. After installation, run: stripe login');
-    console.log(
-      'After installation and authentication, please run this setup script again.'
-    );
+  } catch {
+    console.error('❌ Stripe CLI not installed.');
+    console.log('Install from: https://docs.stripe.com/stripe-cli');
     process.exit(1);
   }
 }
 
-async function getPostgresURL(): Promise<string> {
-  console.log('Step 2: Setting up Postgres');
-  const dbChoice = await question(
-    'Do you want to use a local Postgres instance with Docker (L) or a remote Postgres instance (R)? (L/R): '
-  );
-
-  if (dbChoice.toLowerCase() === 'l') {
-    console.log('Setting up local Postgres instance with Docker...');
-    await setupLocalPostgres();
-    return 'postgres://postgres:postgres@localhost:54322/postgres';
-  } else {
-    console.log(
-      'You can find Postgres databases at: https://vercel.com/marketplace?category=databases'
-    );
-    return await question('Enter your POSTGRES_URL: ');
-  }
+function generateDBPass(): string {
+  console.log('Step 2: Generating Postgres DB password...');
+  const salt = crypto.randomBytes(16).toString('hex');
+  return crypto.pbkdf2Sync('pembswastesms', salt, 100000, 64, 'sha512').toString('hex');
 }
 
-async function setupLocalPostgres() {
-  console.log('Checking if Docker is installed...');
+async function setupDockerPostgres(dbPassword: string) {
+  console.log('🔧 Setting up Postgres instance via Docker...');
+
   try {
     await execAsync('docker --version');
-    console.log('Docker is installed.');
-  } catch (error) {
-    console.error(
-      'Docker is not installed. Please install Docker and try again.'
-    );
-    console.log(
-      'To install Docker, visit: https://docs.docker.com/get-docker/'
-    );
+    console.log('✅ Docker is installed.');
+  } catch {
+    console.error('❌ Docker is not installed. Visit https://docs.docker.com/get-docker/');
     process.exit(1);
   }
 
-  console.log('Creating docker-compose.yml file...');
   const dockerComposeContent = `
 services:
   postgres:
     image: postgres:16.4-alpine
+    restart: always
     container_name: pembswastesms.local
     environment:
-      POSTGRES_DB: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pembs
+      POSTGRES_USER: wasteadmin
+      POSTGRES_PASSWORD: ${dbPassword}
     ports:
       - "54322:5432"
     volumes:
@@ -129,29 +95,26 @@ volumes:
   postgres_data:
 `;
 
-  await fs.writeFile(
-    path.join(process.cwd(), 'docker-compose.yml'),
-    dockerComposeContent
-  );
-  console.log('docker-compose.yml file created.');
+  await fs.writeFile(path.join(process.cwd(), 'docker-compose.yml'), dockerComposeContent.trim());
+  console.log('✅ docker-compose.yml created.');
 
-  console.log('Starting Docker container with `docker compose up -d`...');
   try {
     await execAsync('docker compose up -d');
-    console.log('Docker container [pembswastesms.local] started successfully.');
-  } catch (error) {
-    console.error(
-      'Failed to start Docker container. Please check your Docker installation and try again.'
-    );
+    console.log('✅ Docker container [pembswastesms.local] started.');
+  } catch (err) {
+    console.error('❌ Failed to start Docker container.');
     process.exit(1);
   }
 }
 
+async function getPostgresURL(dbPassword: string): Promise<string> {
+  await setupDockerPostgres(dbPassword);
+  return `postgres://wasteadmin:${encodeURIComponent(dbPassword)}@localhost:54322/pembs`;
+}
+
 async function getStripeSecretKey(): Promise<string> {
-  console.log('Step 3: Getting Stripe Secret Key');
-  console.log(
-    'You can find your Stripe Secret Key at: https://dashboard.stripe.com/test/apikeys'
-  );
+  console.log('Step 3: Getting Stripe Secret Key...');
+  console.log('Visit: https://dashboard.stripe.com/test/apikeys');
   return await question('Enter your Stripe Secret Key: ');
 }
 
@@ -160,21 +123,15 @@ async function createStripeWebhook(): Promise<string> {
   try {
     const { stdout } = await execAsync('stripe listen --print-secret');
     const match = stdout.match(/whsec_[a-zA-Z0-9]+/);
-    if (!match) {
-      throw new Error('Failed to extract Stripe webhook secret');
-    }
-    console.log('Stripe webhook created.');
+    if (!match) throw new Error('No webhook secret found in output.');
+    console.log('✅ Stripe webhook secret obtained.');
     return match[0];
-  } catch (error) {
-    console.error(
-      'Failed to create Stripe webhook. Check your Stripe CLI installation and permissions.'
-    );
+  } catch (err) {
+    console.error('❌ Failed to create webhook. Check your Stripe CLI permissions.');
     if (os.platform() === 'win32') {
-      console.log(
-        'Note: On Windows, you may need to run this script as an administrator.'
-      );
+      console.log('🔔 Note: On Windows, you might need to run this as Administrator.');
     }
-    throw error;
+    process.exit(1);
   }
 }
 
@@ -184,37 +141,44 @@ function generateAuthSecret(): string {
 }
 
 async function writeEnvFile(envVars: Record<string, string>) {
-  console.log('Step 6: Writing environment variables to .env');
+  console.log('Step 6: Writing .env file...');
   const envContent = Object.entries(envVars)
     .map(([key, value]) => `${key}=${value}`)
     .join('\n');
-
-  await fs.writeFile(path.join(process.cwd(), '.env'), envContent);
-  console.log('.env file created with the necessary variables.');
+  const filePath = isProd ? path.join(process.cwd(), '.env.production') : path.join(process.cwd(), '.env.local');
+  console.log('Writing file to:', filePath);
+  await fs.writeFile(filePath, envContent);
+  console.log('✅ .env file written.');
 }
 
 async function main() {
   await checkStripeCLI();
 
-  const POSTGRES_URL = await getPostgresURL();
+  const dbPassword = generateDBPass();
+  const DATABASE_URL = await getPostgresURL(dbPassword);
   const STRIPE_SECRET_KEY = await getStripeSecretKey();
   const STRIPE_WEBHOOK_SECRET = await createStripeWebhook();
-  const BASE_URL = 'http://localhost:3000';
+  const BASE_URL = isProd ? 'https://pembswastesms.uk' : 'http://localhost:3000';
   const AUTH_SECRET = generateAuthSecret();
-  const NEXT_PUBLIC_SUPABASE_URL='https://jfhizzbxoxsxwnxenlnf.supabase.co';
-  const NEXT_PUBLIC_SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmaGl6emJ4b3hzeHdueGVubG5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MDAzNTksImV4cCI6MjA2Mjk3NjM1OX0.fBMzHRgFFO5lZwikxwBUdEeTR89FXHZaHKkLDdyIuZE';
+
+  const NEXT_PUBLIC_SUPABASE_URL = 'https://jfhizzbxoxsxwnxenlnf.supabase.co';
+  const NEXT_PUBLIC_SUPABASE_ANON_KEY =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmaGl6emJ4b3hzeHdueGVubG5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MDAzNTksImV4cCI6MjA2Mjk3NjM1OX0.fBMzHRgFFO5lZwikxwBUdEeTR89FXHZaHKkLDdyIuZE';
 
   await writeEnvFile({
-    POSTGRES_URL,
+    DATABASE_URL,
     STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET,
     BASE_URL,
     AUTH_SECRET,
     NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY
+    NEXT_PUBLIC_SUPABASE_ANON_KEY,
   });
 
   console.log('🎉 Setup completed successfully!');
 }
 
-main().catch(console.error);
+main().catch((err) => {
+  console.error('❌ Setup failed:', err);
+  process.exit(1);
+});

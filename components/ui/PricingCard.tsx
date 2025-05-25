@@ -1,4 +1,4 @@
-import { SubmitButton } from "@/components/ui/submit-button";
+import SubmitButton from "@/components/ui/submit-button";
 import { checkoutAction } from "@/lib/payments/actions";
 import { Check } from "lucide-react";
 
@@ -19,7 +19,6 @@ export default function PricingCard({
   priceId?: string;
   uprn: string | undefined;
 }) {
-  console.log(priceId, uprn);
 return (
   <div className="flex flex-col justify-between h-full pt-6 border border-orange-500 shadow-lg rounded-lg p-6 bg-white">
     <div>

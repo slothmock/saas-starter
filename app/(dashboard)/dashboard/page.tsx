@@ -27,7 +27,6 @@ function SubscriptionSkeleton() {
 
 function ManageSubscription() {
   const { data: teamData } = useSWR<TeamDataWithMembers>('/api/team', fetcher);
-
   return (
     <Card className="mb-8">
       <CardHeader>
@@ -47,15 +46,22 @@ function ManageSubscription() {
                 {teamData?.subscriptionStatus === 'active'
                   ? 'Billed monthly'
                   : teamData?.subscriptionStatus === 'trialing'
-                  ? 'Trial period'
-                  : 'No active subscription'}
+                    ? 'Trial period'
+                    : 'No active subscription'}
               </p>
             </div>
-            <form action={customerPortalAction}>
-              <Button type="submit" variant="outline">
-                Manage Subscription
+
+            {teamData?.uprn ? (
+              <form action={customerPortalAction}>
+                <Button type="submit" className="rounded-full bg-orange-500">
+                  Manage Subscription
+                </Button>
+              </form>
+            ) : (
+              <Button asChild className="rounded-full bg-orange-500">
+                <a href="/">Set up Reminders</a>
               </Button>
-            </form>
+            )}
           </div>
         </div>
       </CardContent>
