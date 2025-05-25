@@ -1,28 +1,17 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-  CardFooter
 } from '@/components/ui/card';
 import { customerPortalAction } from '@/lib/payments/actions';
-import { useActionState } from 'react';
 import { TeamDataWithMembers, User } from '@/lib/db/schema';
 import useSWR from 'swr';
 import { Suspense } from 'react';
-import { Input } from '@/components/ui/input';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Loader2, PlusCircle } from 'lucide-react';
 
-type ActionState = {
-  error?: string;
-  success?: string;
-};
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -30,7 +19,7 @@ function SubscriptionSkeleton() {
   return (
     <Card className="mb-8 h-[140px]">
       <CardHeader>
-        <CardTitle>Team Subscription</CardTitle>
+        <CardTitle>Subscription</CardTitle>
       </CardHeader>
     </Card>
   );
@@ -50,6 +39,9 @@ function ManageSubscription() {
             <div className="mb-4 sm:mb-0">
               <p className="font-medium">
                 Current Plan: {teamData?.planName || 'Free'}
+              </p>
+              <p className="font-medium">
+                Registered UPRN: {teamData?.uprn || 'Not Found'}
               </p>
               <p className="text-sm text-muted-foreground">
                 {teamData?.subscriptionStatus === 'active'

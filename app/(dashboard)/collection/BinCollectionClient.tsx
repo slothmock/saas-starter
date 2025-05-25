@@ -19,7 +19,7 @@ export default function BinCollectionClient({
     <div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {bins.map((bin, idx) => {
-          const mapped = binMap[bin.name] ?? {
+          const { shortName, image } = binMap[bin.name] ?? {
             shortName: bin.name,
             image: '/binImages/default.svg',
           };
@@ -31,14 +31,14 @@ export default function BinCollectionClient({
             >
               <div className="flex justify-center mb-2">
                 <Image
-                  src={mapped.image}
-                  alt={mapped.shortName}
+                  src={image}
+                  alt={shortName}
                   width={64}
                   height={64}
                   className="mx-auto"
                 />
               </div>
-              <p className="font-medium">{mapped.shortName}</p>
+              <p className="font-medium">{shortName}</p>
               <p className="text-sm text-gray-600">{bin.date}</p>
             </div>
           );
@@ -47,7 +47,7 @@ export default function BinCollectionClient({
 
       <div className="text-center mt-10">
         <a
-          href={`/sign-up?uprn=${uprn}`}
+          href={`/pricing?redirect=checkout&uprn=${uprn}`}
           className="bg-orange-500 hover:bg-orange-700 text-white px-6 py-3 rounded-lg shadow font-semibold transition"
         >
           Get Text Reminders

@@ -20,11 +20,18 @@ export default function HomePage() {
     }
 
     const fetchResults = debounce(async () => {
-      setLoading(true);
-      const res = await fetch(`/api/search-address?q=${encodeURIComponent(query)}`);
-      const data = await res.json();
-      setResults(data);
-      setLoading(false);
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/search-address?q=${encodeURIComponent(query)}`);
+        if (!res.ok) throw new Error('Failed to fetch');
+        const data = await res.json();
+        setResults(data);
+      } catch (error) {
+        console.error(error);
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
     }, 300);
 
     fetchResults();
@@ -42,45 +49,45 @@ export default function HomePage() {
     <main>
       <section className="py-20 text-center">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="lg:grid lg:grid-cols-12 lg:gap-8">
+          <div className="flex flex-col items-center space-y-8">
             <Logo />
-              <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-xl lg:text-lg xl:text-xl">
-                Never forget bin day again with our super simple text reminders!
-                <br />
-                You can <strong>also</strong> find Pembrokeshire's next waste collection information by entering your
-                address or postcode below.
-              </p>
+            <p className="text-base text-gray-500 sm:text-xl">
+              Never forget bin day again with our super simple text reminders!
+              <br />
+              You can <strong>also</strong> find Pembrokeshire's next waste collection information by entering your
+              address or postcode below.
+            </p>
 
-              <div className="mt-8 sm:max-w-lg sm:mx-auto sm:text-center lg:text-left lg:mx-0">
-                <div className="relative">
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 rounded-full border shadow-sm focus:outline-none ring-2 ring-orange-500"
-                    placeholder="Enter your address or postcode"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                  />
-                  <SearchIcon className="absolute right-4 top-3.5 text-gray-400 h-5 w-5 cursor-pointer" />
-                </div>
-
-                {loading && <p className="text-sm mt-2 text-gray-500">Searching...</p>}
-
-                {results.length > 0 && (
-                  <ul className="max-h-64 overflow-y-auto mt-4 border rounded-lg shadow-sm bg-white divide-y text-left">
-                    {results.map((addr) => (
-                      <li
-                        key={addr.uprn}
-                        className="px-4 py-3 hover:bg-orange-50 cursor-pointer"
-                        onClick={() => handleSelect(addr.uprn)}
-                      >
-                        {addr.address_text}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+            <div className="sm:max-w-lg w-full">
+              <div className="relative">
+                <input
+                  type="text"
+                  className="w-full px-4 py-3 rounded-full border shadow-sm focus:outline-none ring-2 ring-orange-500"
+                  placeholder="Enter your address or postcode"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+                <SearchIcon className="absolute right-4 top-3.5 text-gray-400 h-5 w-5 cursor-pointer" />
               </div>
+
+              {loading && <p className="text-sm mt-2 text-gray-500">Searching...</p>}
+
+              {results.length > 0 && (
+                <ul className="max-h-64 overflow-y-auto mt-4 border rounded-lg shadow-sm bg-white divide-y text-left">
+                  {results.map((addr) => (
+                    <li
+                      key={addr.uprn}
+                      className="px-4 py-3 hover:bg-orange-50 cursor-pointer"
+                      onClick={() => handleSelect(addr.uprn)}
+                    >
+                      {addr.address_text}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
+        </div>
       </section>
     </main>
   );

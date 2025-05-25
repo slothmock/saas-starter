@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  maximumScale: 1
+  maximumScale: 0.5
 };
 
 const manrope = Manrope({ subsets: ['latin'] });
@@ -25,7 +25,7 @@ export default function RootLayout({
       lang="en"
       className={`bg-white dark:bg-gray-950 text-black dark:text-white ${manrope.className}`}
     >
-      <body className="min-h-[100dvh] bg-gray-50">
+      <body className="min-h-[100dvh] max-w-[100dvw] bg-gray-50">
         <SWRConfig
           value={{
             fallback: {

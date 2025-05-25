@@ -46,7 +46,8 @@ async function logActivity(
 
 const signInSchema = z.object({
   email: z.string().email().min(3).max(255),
-  password: z.string().min(8).max(100)
+  password: z.string().min(8).max(100),
+  uprn: z.string().optional()
 });
 
 export const signIn = validatedAction(signInSchema, async (data, formData) => {
@@ -94,7 +95,8 @@ export const signIn = validatedAction(signInSchema, async (data, formData) => {
   const redirectTo = formData.get('redirect') as string | null;
   if (redirectTo === 'checkout') {
     const priceId = formData.get('priceId') as string;
-    return createCheckoutSession({ team: foundTeam, priceId });
+    const uprn = formData.get('uprn') as string | null;
+    return createCheckoutSession({ team: foundTeam, priceId, uprn });
   }
 
   redirect('/dashboard');
@@ -103,11 +105,12 @@ export const signIn = validatedAction(signInSchema, async (data, formData) => {
 const signUpSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
-  inviteId: z.string().optional()
+  inviteId: z.string().optional(),
+  uprn: z.string().optional()
 });
 
 export const signUp = validatedAction(signUpSchema, async (data, formData) => {
-  const { email, password, inviteId } = data;
+  const { email, password, inviteId, uprn } = data;
 
   const existingUser = await db
     .select()
@@ -181,7 +184,7 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
   } else {
     // Create a new team if there's no invitation
     const newTeam: NewTeam = {
-      name: `${email}'s Team`
+      name: `${email}'s Reminders`,
     };
 
     [createdTeam] = await db.insert(teams).values(newTeam).returning();
@@ -215,11 +218,19 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
   const redirectTo = formData.get('redirect') as string | null;
   if (redirectTo === 'checkout') {
     const priceId = formData.get('priceId') as string;
-    return createCheckoutSession({ team: createdTeam, priceId });
+    const uprn = formData.get('uprn') as string;
+    return createCheckoutSession({ team: createdTeam, priceId, uprn });
+  }
+
+  if (uprn) {
+  await db.update(teams)
+    .set({ uprn })
+    .where(eq(teams.id, teamId));
   }
 
   redirect('/dashboard');
 });
+
 
 export async function signOut() {
   const user = (await getUser()) as User;

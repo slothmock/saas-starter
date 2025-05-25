@@ -10,10 +10,11 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const sessionId = searchParams.get('session_id');
 
+  
   if (!sessionId) {
     return NextResponse.redirect(new URL('/pricing', request.url));
   }
-
+  
   try {
     const session = await stripe.checkout.sessions.retrieve(sessionId, {
       expand: ['customer', 'subscription'],
@@ -84,9 +85,12 @@ export async function GET(request: NextRequest) {
         stripeProductId: productId,
         planName: (plan.product as Stripe.Product).name,
         subscriptionStatus: subscription.status,
+        uprn: ((plan.product as Stripe.Product).metadata.uprn as string),
         updatedAt: new Date(),
       })
       .where(eq(teams.id, userTeam[0].teamId));
+
+    console.log(`Subscription added with UPRN: ${((plan.product as Stripe.Product).metadata.uprn as string)}`)
 
     await setSession(user[0]);
     return NextResponse.redirect(new URL('/dashboard', request.url));

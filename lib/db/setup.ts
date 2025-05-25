@@ -115,7 +115,7 @@ async function setupLocalPostgres() {
 services:
   postgres:
     image: postgres:16.4-alpine
-    container_name: next_saas_starter_postgres
+    container_name: pembswastesms.local
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
@@ -138,7 +138,7 @@ volumes:
   console.log('Starting Docker container with `docker compose up -d`...');
   try {
     await execAsync('docker compose up -d');
-    console.log('Docker container started successfully.');
+    console.log('Docker container [pembswastesms.local] started successfully.');
   } catch (error) {
     console.error(
       'Failed to start Docker container. Please check your Docker installation and try again.'
@@ -201,6 +201,8 @@ async function main() {
   const STRIPE_WEBHOOK_SECRET = await createStripeWebhook();
   const BASE_URL = 'http://localhost:3000';
   const AUTH_SECRET = generateAuthSecret();
+  const NEXT_PUBLIC_SUPABASE_URL='https://jfhizzbxoxsxwnxenlnf.supabase.co';
+  const NEXT_PUBLIC_SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmaGl6emJ4b3hzeHdueGVubG5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MDAzNTksImV4cCI6MjA2Mjk3NjM1OX0.fBMzHRgFFO5lZwikxwBUdEeTR89FXHZaHKkLDdyIuZE';
 
   await writeEnvFile({
     POSTGRES_URL,
@@ -208,6 +210,8 @@ async function main() {
     STRIPE_WEBHOOK_SECRET,
     BASE_URL,
     AUTH_SECRET,
+    NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY
   });
 
   console.log('🎉 Setup completed successfully!');

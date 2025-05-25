@@ -6,32 +6,32 @@ import { hashPassword } from '@/lib/auth/session';
 async function createStripeProducts() {
   console.log('Creating Stripe products and prices...');
 
-  const baseProduct = await stripe.products.create({
-    name: 'Base',
-    description: 'Base subscription plan',
+  const monthlyProduct = await stripe.products.create({
+    name: 'Monthly',
+    description: 'Monthly subscription plan',
   });
 
   await stripe.prices.create({
-    product: baseProduct.id,
-    unit_amount: 800, // $8 in cents
-    currency: 'usd',
+    product: monthlyProduct.id,
+    unit_amount: 199, 
+    currency: 'gbp',
     recurring: {
       interval: 'month',
       trial_period_days: 7,
     },
   });
 
-  const plusProduct = await stripe.products.create({
-    name: 'Plus',
-    description: 'Plus subscription plan',
+  const annualProduct = await stripe.products.create({
+    name: 'Annual',
+    description: 'Annual subscription plan',
   });
 
   await stripe.prices.create({
-    product: plusProduct.id,
-    unit_amount: 1200, // $12 in cents
-    currency: 'usd',
+    product: annualProduct.id,
+    unit_amount: 2199,
+    currency: 'gbp',
     recurring: {
-      interval: 'month',
+      interval: 'year',
       trial_period_days: 7,
     },
   });
@@ -40,7 +40,7 @@ async function createStripeProducts() {
 }
 
 async function seed() {
-  const email = 'test@test.com';
+  const email = 'admin@pembswastesms.uk';
   const password = 'admin123';
   const passwordHash = await hashPassword(password);
 
@@ -60,7 +60,7 @@ async function seed() {
   const [team] = await db
     .insert(teams)
     .values({
-      name: 'Test Team',
+      name: 'Test Reminder',
     })
     .returning();
 

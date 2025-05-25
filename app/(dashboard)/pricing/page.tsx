@@ -6,11 +6,16 @@ import { SubmitButton } from './submit-button';
 // Prices are fresh for one hour max
 export const revalidate = 3600;
 
-export default async function PricingPage() {
+export default async function PricingPage( {searchParams }: { searchParams: { uprn: string }}) {
   const [prices, products] = await Promise.all([
     getStripePrices(),
     getStripeProducts(),
   ]);
+
+  const params = await searchParams;
+  const uprn = params?.uprn;
+
+  console.log(uprn)
 
   const monthlyPlan = products.find((product) => product.name === 'Monthly');
   const annualPlan = products.find((product) => product.name === 'Annual');
@@ -32,6 +37,8 @@ export default async function PricingPage() {
             'Cancel anytime'
           ]}
           priceId={monthlyPrice?.id}
+          uprn={uprn}
+          
         />
         <PricingCard
           name={annualPlan?.name || 'Annual'}
@@ -43,6 +50,7 @@ export default async function PricingPage() {
             '2 months completely free!',
           ]}
           priceId={annualPrice?.id}
+          uprn={uprn}
         />
       </div>
     </main>
@@ -56,6 +64,7 @@ function PricingCard({
   trialDays,
   features,
   priceId,
+  uprn
 }: {
   name: string;
   price: number;
@@ -63,7 +72,9 @@ function PricingCard({
   trialDays: number;
   features: string[];
   priceId?: string;
+  uprn: string | undefined;
 }) {
+  console.log(priceId, uprn);
 return (
   <div className="flex flex-col justify-between h-full pt-6 border border-orange-500 shadow-lg rounded-lg p-6 bg-white">
     <div>
@@ -87,10 +98,10 @@ return (
       </ul>
     </div>
     <form action={checkoutAction}>
-      <input type="hidden" name="priceId" value={priceId} />
+      <input type="hidden" name="priceId" value={priceId}/>
+      <input type="hidden" name="uprn" value={uprn}/>
       <SubmitButton className="w-full bg-orange-500 text-white hover:text-white cursor-pointer py-3 rounded-lg mt-4 hover:bg-orange-600 transition" />
     </form>
   </div>
 );
-
 }
