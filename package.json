@@ -55,6 +55,7 @@
     "zod": "^3.24.4"
   },
   "devDependencies": {
+    "@types/lodash.debounce": "^4.0.9",
     "dotenv-cli": "^8.0.0"
   }
 }

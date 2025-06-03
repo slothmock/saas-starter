@@ -1,6 +1,6 @@
 import { desc, and, eq, isNull } from 'drizzle-orm';
 import { db } from './drizzle';
-import { activityLogs, teamMembers, teams, users } from './schema';
+import { users, subscriptions } from './schema';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth/session';
 
@@ -36,96 +36,66 @@ export async function getUser() {
   return user[0];
 }
 
-export async function getTeamByStripeCustomerId(customerId: string) {
+export async function getSubscriptionsForUser(userId: number) {
+  return await db
+    .select()
+    .from(subscriptions)
+    .where(eq(subscriptions.userId, userId));
+}
+
+export async function getSubscriptionByCustomerId(customerId: string) {
   const result = await db
     .select()
-    .from(teams)
-    .where(eq(teams.stripeCustomerId, customerId))
-    .limit(1);
+    .from(subscriptions)
+    .where(eq(subscriptions.stripeCustomerId, customerId))
 
   return result.length > 0 ? result[0] : null;
 }
 
-export async function updateTeamSubscription(
-  teamId: number,
+export async function updateSubscription(
+  subscriptionId: number,
   subscriptionData: {
-    stripeSubscriptionId: string | null;
-    stripeProductId: string | null;
-    planName: string | null;
+    stripeSubscriptionId?: string | null;
+    stripeProductId?: string | null;
+    planName?: string | null;
     subscriptionStatus: string;
-    uprn: string | null;
+    uprn?: string | null;
   }
 ) {
   await db
-    .update(teams)
+    .update(subscriptions)
     .set({
-      ...subscriptionData,
-      updatedAt: new Date()
+      ...(subscriptionData.stripeSubscriptionId !== null && {
+        stripeSubscriptionId: subscriptionData.stripeSubscriptionId,
+      }),
+      ...(subscriptionData.stripeProductId !== null && {
+        stripeProductId: subscriptionData.stripeProductId,
+      }),
+      ...(subscriptionData.planName !== null && {
+        planName: subscriptionData.planName,
+      }),
+      ...(subscriptionData.uprn !== null && {
+        uprn: subscriptionData.uprn,
+      }),
+      subscriptionStatus: subscriptionData.subscriptionStatus,
+      updatedAt: new Date(),
     })
-    .where(eq(teams.id, teamId));
+    .where(eq(subscriptions.id, subscriptionId));
 }
 
-export async function getUserWithTeam(userId: number) {
-  const result = await db
-    .select({
-      user: users,
-      teamId: teamMembers.teamId
-    })
-    .from(users)
-    .leftJoin(teamMembers, eq(users.id, teamMembers.userId))
-    .where(eq(users.id, userId))
-    .limit(1);
-
-  return result[0];
-}
-
-export async function getActivityLogs() {
+/**
+ * Retrieves the subscriptions associated with the currently authenticated user.
+ * 
+ * @returns {Promise<Array>} A promise that resolves to an array of subscription records.
+ * @throws {Error} If the user is not authenticated.
+ */
+export async function getUserSubscriptions() {
   const user = await getUser();
-  if (!user) {
-    throw new Error('User not authenticated');
-  }
+  if (!user) throw new Error('User not authenticated');
 
   return await db
-    .select({
-      id: activityLogs.id,
-      action: activityLogs.action,
-      timestamp: activityLogs.timestamp,
-      ipAddress: activityLogs.ipAddress,
-      userName: users.name
-    })
-    .from(activityLogs)
-    .leftJoin(users, eq(activityLogs.userId, users.id))
-    .where(eq(activityLogs.userId, user.id))
-    .orderBy(desc(activityLogs.timestamp))
-    .limit(10);
+    .select()
+    .from(subscriptions)
+    .where(eq(subscriptions.userId, user.id));
 }
 
-export async function getTeamForUser() {
-  const user = await getUser();
-  if (!user) {
-    return null;
-  }
-
-  const result = await db.query.teamMembers.findFirst({
-    where: eq(teamMembers.userId, user.id),
-    with: {
-      team: {
-        with: {
-          teamMembers: {
-            with: {
-              user: {
-                columns: {
-                  id: true,
-                  name: true,
-                  email: true
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  });
-
-  return result?.team || null;
-}

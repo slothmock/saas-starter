@@ -26,7 +26,7 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
         <div className="flex justify-center">
           <TrashIcon className="h-12 w-12 text-orange-500" />
           <h2 className='text-lg text-center font-bold text-gray-900 tracking-tight sm:text-5xl md:text-6xl'>
-          PembsWaste<span className="text-orange-500">SMS</span></h2>
+            PembsWaste<span className="text-orange-500">SMS</span></h2>
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
           {mode === 'signin'
@@ -36,10 +36,32 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <form className="space-y-6" action={formAction}>
+        <form className="space-y-4" action={formAction}>
           <input type="hidden" name="redirect" value={redirect || ''} />
           <input type="hidden" name="priceId" value={priceId || ''} />
           <input type="hidden" name="inviteId" value={uprn || ''} />
+          {mode === 'signup' && (
+            <div>
+              <Label
+                htmlFor="name"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Name
+              </Label>
+              <div className="mt-1">
+                <Input
+                  id="name"
+                  name="name"
+                  type="text"
+                  defaultValue={state.name}
+                  required
+                  maxLength={50}
+                  className="appearance-none rounded-full relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
+                  placeholder="Your name"
+                />
+              </div>
+            </div>
+          )}
           <div>
             <Label
               htmlFor="email"
