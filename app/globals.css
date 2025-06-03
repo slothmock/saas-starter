@@ -66,6 +66,7 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
+
   *,
   ::after,
   ::before,
@@ -158,9 +159,15 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
+  a {
+    @apply hover:underline;
+  }
+
 }
 
 /*
@@ -269,7 +276,12 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
+  }
+  
+  a {
+    @apply hover:underline;
   }
 }
