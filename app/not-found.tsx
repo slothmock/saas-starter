@@ -12,7 +12,7 @@ export default function NotFound() {
           Page Not Found
         </h1>
         <p className="text-base text-gray-500">
-          The page you are looking for might have been removed, had its name
+          The page you are looking for might have been removed, had it's name
           changed, or is temporarily unavailable.
         </p>
         <Link
