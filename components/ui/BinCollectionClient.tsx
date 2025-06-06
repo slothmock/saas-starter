@@ -2,19 +2,24 @@
 
 import Image from 'next/image';
 import { binMap } from '@/lib/utils';
+import { DashboardSubscription } from '@/types';
 
 type Bin = {
   name: string;
   date: string;
 };
 
-export default function BinCollectionClient({
-  bins,
-  uprn,
-}: {
+type Props = {
   bins: Bin[];
   uprn: string;
-}) {
+  subscriptions: DashboardSubscription[];
+};
+
+export default function BinCollectionClient({ bins, uprn, subscriptions }: Props) {
+  const isAlreadySubscribed = subscriptions.some(
+    (sub) => sub.uprn === uprn && sub.status !== 'canceled'
+  );
+
   return (
     <div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -45,14 +50,22 @@ export default function BinCollectionClient({
         })}
       </div>
 
-      <div className="text-center mt-10">
-        <a
-          href={`/pricing?redirect=checkout&uprn=${uprn}`}
-          className="bg-orange-500 hover:bg-orange-700 text-white px-6 py-3 rounded-lg shadow font-semibold transition"
-        >
-          Get Text Reminders
-        </a>
-      </div>
+      {!isAlreadySubscribed && (
+        <div className="text-center mt-10">
+          <a
+            href={`/pricing?redirect=checkout&uprn=${uprn}`}
+            className="bg-orange-500 hover:bg-orange-700 text-white px-6 py-3 rounded-lg shadow font-semibold transition"
+          >
+            Get Text Reminders
+          </a>
+        </div>
+      )}
+
+      {isAlreadySubscribed && (
+        <div className="text-center mt-10 text-sm text-gray-600 font-medium">
+          You're already subscribed to reminders for this address.
+        </div>
+      )}
     </div>
   );
 }

@@ -45,7 +45,7 @@ export const setSession = async (user: NewUser) => {
   (await cookies()).set('session', encryptedSession, {
     expires: expiresInOneDay,
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
   });
 };

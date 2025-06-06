@@ -1,11 +1,6 @@
-import Stripe from 'stripe';
 import { redirect } from 'next/navigation';
-import { subscriptions, User } from '@/lib/db/schema';
-import {
-  getSubscriptionByCustomerId,
-  updateSubscription,
-  getSubscriptionsForUser
-} from '@/lib/db/queries';
+import { User } from '@/lib/db/schema';
+import { Stripe, DashboardSubscription } from '@/types';
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-04-30.basil'
@@ -21,15 +16,29 @@ export async function createCheckoutSession({
   uprn: string | null;
 }) {
   if (!uprn) {
-    console.log('No uprn provided');
+    console.log('No UPRN provided');
     return redirect('/');
   }
 
   if (!user) {
     return redirect(`/sign-up?redirect=checkout&priceId=${priceId}&uprn=${uprn}`);
   }
+  const stripeId = user!.stripeCustomerId
+  if (!stripeId) {
+    const subscriptions = null;
+  } else {
+  const existingSub = await getUserSubscriptions(stripeId)
+  }
+  const customer =
+    (
+      await stripe.customers.create({
+        email: user.email ?? undefined,
+        metadata: {
+          userId: user.id.toString()
+        }
+      })
+    ).id;
 
-  const existingSub = await getSubscriptionByCustomerId(user.id.toString());
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
@@ -37,65 +46,65 @@ export async function createCheckoutSession({
     mode: 'subscription',
     success_url: `${process.env.BASE_URL}/api/stripe/checkout?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${process.env.BASE_URL}/pricing`,
-    customer: existingSub?.stripeCustomerId || undefined,
+    customer,
     client_reference_id: user.id.toString(),
     allow_promotion_codes: true,
     subscription_data: {
       trial_period_days: 7,
-      metadata: { uprn }
+      metadata: {
+        uprn
+      }
     }
   });
 
   return redirect(session.url!);
 }
 
+
 export async function createCustomerPortalSession(user: User) {
 
-  const subscription = await getSubscriptionByCustomerId(user.id.toString());
-  if (!subscription?.stripeCustomerId) throw new Error('No Stripe customer found');
+  const stripeId = user!.stripeCustomerId
 
-  const session = await stripe.billingPortal.sessions.create({
-    customer: subscription.stripeCustomerId,
-    return_url: `${process.env.BASE_URL}/dashboard`
-  });
+  if (!stripeId) {
+    const subscriptions = null;
+  } else {
+    const subscriptions = await getUserSubscriptions(stripeId);
+    const session = await stripe.billingPortal.sessions.create({
+      customer: stripeId,
+      return_url: `${process.env.BASE_URL}/dashboard`
+    });
 
+    if (!session.url) throw new Error('Stripe session URL missing');
 
-  if (!session.url) throw new Error('Stripe session URL missing');
-  return redirect(session.url);
-
+    return redirect(session.url);
+  }
 }
 
-export async function handleSubscriptionChange(
-  subscription: Stripe.Subscription
-) {
-  const customerId = subscription.customer as string;
-  const subscriptionId = subscription.id;
-  const status = subscription.status;
+export async function getUserSubscriptions(user_id: string): Promise<DashboardSubscription[]> {
+  const stripeSubs = await stripe.subscriptions.list({
+    customer: user_id,
+    status: 'all',
+  });
 
-  const user = await getSubscriptionByCustomerId(customerId);
-  if (!user) {
-    console.error('User not found for Stripe customer:', customerId);
-    return;
-  }
+  return stripeSubs.data.map((sub): DashboardSubscription => {
+    const item = sub.items.data[0];
+    const price = item.price;
+    const product = price.product as Stripe.Product;
+    const planName = product.name;
 
-  if (status === 'active' || status === 'trialing') {
-    const plan = subscription.items.data[0]?.plan;
-    await updateSubscription(user.id, {
-      stripeSubscriptionId: subscriptionId,
-      stripeProductId: plan?.product as string,
-      planName: plan?.nickname || '',
-      subscriptionStatus: status,
-      uprn: subscription.metadata?.uprn || null
-    });
-  } else if (status === 'canceled' || status === 'unpaid') {
-    await updateSubscription(user.id, {
-      stripeSubscriptionId: null,
-      stripeProductId: null,
-      planName: null,
-      subscriptionStatus: status,
-      uprn: null
-    });
-  }
+    return {
+      id: sub.id,
+      status: sub.status,
+      planName,
+      uprn: sub.metadata?.uprn || product.metadata?.uprn || null,
+      cancelAtPeriodEnd: sub.cancel_at_period_end ?? false,
+      price: {
+        amount: price.unit_amount ?? null,
+        interval: price.recurring?.interval,
+        currency: price.currency,
+      },
+    };
+  });
 }
 
 export async function getStripePrices() {

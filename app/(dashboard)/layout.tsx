@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { signOut } from '@/app/(login)/actions';
-import { useRouter } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 import { User } from '@/lib/db/schema';
 import useSWR from 'swr';
 import Footer from '@/components/ui/footer';
@@ -25,9 +25,7 @@ function UserMenu() {
   const router = useRouter();
 
   async function handleSignOut() {
-    await signOut();
-    router.push('/');
-    router.refresh();
+    await signOut().then(() => { redirect('/') });
   }
 
   if (!user) {

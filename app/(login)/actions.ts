@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import { eq, sql } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
-import { users, subscriptions, type User } from '@/lib/db/schema';
+import { users, type User } from '@/lib/db/schema';
 import { comparePasswords, hashPassword, setSession } from '@/lib/auth/session';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
@@ -67,7 +67,7 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
   if (existingUser) return { error: 'User already exists.', email, password };
 
   const passwordHash = await hashPassword(password);
-  const [user] = await db.insert(users).values({ email, passwordHash }).returning();
+  const [user] = await db.insert(users).values({ name: username, email: email, passwordHash: passwordHash }).returning();
   if (!user) return { error: 'Failed to create user.', email, password };
 
   await setSession(user);

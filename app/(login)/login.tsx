@@ -39,7 +39,7 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
         <form className="space-y-4" action={formAction}>
           <input type="hidden" name="redirect" value={redirect || ''} />
           <input type="hidden" name="priceId" value={priceId || ''} />
-          <input type="hidden" name="inviteId" value={uprn || ''} />
+          <input type="hidden" name="uprn" value={uprn || ''} />
           {mode === 'signup' && (
             <div>
               <Label
@@ -50,8 +50,8 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
               </Label>
               <div className="mt-1">
                 <Input
-                  id="name"
-                  name="name"
+                  id="username"
+                  name="username"
                   type="text"
                   defaultValue={state.name}
                   required

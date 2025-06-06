@@ -10,7 +10,7 @@ async function createStripeProducts() {
 
   await stripe.prices.create({
     product: monthlyProduct.id,
-    unit_amount: 199, 
+    unit_amount: 99, 
     currency: 'gbp',
     recurring: {
       interval: 'month',
@@ -25,7 +25,7 @@ async function createStripeProducts() {
 
   await stripe.prices.create({
     product: annualProduct.id,
-    unit_amount: 2199,
+    unit_amount: 999,
     currency: 'gbp',
     recurring: {
       interval: 'year',

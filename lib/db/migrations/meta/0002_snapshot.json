@@ -1,6 +1,6 @@
 {
-  "id": "798e6fa7-ebe3-457a-b641-acb0d79b0d73",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "831c02b0-e5e4-46ce-97d3-588a654f9a25",
+  "prevId": "70e9f4ea-77eb-457b-9114-c3fa14d68966",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -110,6 +110,12 @@
           "primaryKey": true,
           "notNull": true
         },
+        "stripe_customer_id": {
+          "name": "stripe_customer_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "name": {
           "name": "name",
           "type": "varchar(100)",
@@ -127,13 +133,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "role": {
-          "name": "role",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'member'"
         },
         "created_at": {
           "name": "created_at",
@@ -160,6 +159,13 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
+        "users_stripe_customer_id_unique": {
+          "name": "users_stripe_customer_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "stripe_customer_id"
+          ]
+        },
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,

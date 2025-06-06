@@ -1,6 +1,6 @@
 {
-  "id": "798e6fa7-ebe3-457a-b641-acb0d79b0d73",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "70e9f4ea-77eb-457b-9114-c3fa14d68966",
+  "prevId": "798e6fa7-ebe3-457a-b641-acb0d79b0d73",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -127,13 +127,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "role": {
-          "name": "role",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'member'"
         },
         "created_at": {
           "name": "created_at",

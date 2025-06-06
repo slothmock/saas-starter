@@ -1,10 +1,10 @@
 import { eq } from 'drizzle-orm';
 import { db } from '@/lib/db/drizzle';
-import { subscriptions, users } from '@/lib/db/schema';
 import { setSession } from '@/lib/auth/session';
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/payments/stripe';
 import Stripe from 'stripe';
+import { users } from '@/lib/db/schema';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -19,35 +19,33 @@ export async function GET(request: NextRequest) {
       expand: ['customer', 'subscription'],
     });
 
-    if (!session.customer || typeof session.customer === 'string') {
-      throw new Error('Invalid customer data from Stripe.');
+    const stripeCustomer = session.customer;
+    const stripeSubscription = session.subscription;
+
+    if (
+      !stripeCustomer ||
+      typeof stripeCustomer === 'string' ||
+      !stripeSubscription ||
+      typeof stripeSubscription === 'string'
+    ) {
+      throw new Error('Missing or invalid customer/subscription object from Stripe.');
     }
 
-    const customerId = session.customer.id;
-    const subscriptionId =
-      typeof session.subscription === 'string'
-        ? session.subscription
-        : session.subscription?.id;
-
-    if (!subscriptionId) {
-      throw new Error('No subscription found for this session.');
-    }
-
+    const customerId = stripeCustomer.id;
+    const subscriptionId = stripeSubscription.id;
     const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
       expand: ['items.data.price.product'],
     });
 
     const plan = subscription.items.data[0]?.price;
-    if (!plan) {
-      throw new Error('No plan found for this subscription.');
-    }
+    if (!plan) throw new Error('No plan found for this subscription.');
 
     const product = plan.product as Stripe.Product;
+    const uprn = subscription.metadata?.uprn;
     const productId = product.id;
-    const uprn = product.metadata?.uprn;
 
-    if (!productId || !uprn) {
-      throw new Error('Missing product ID or UPRN from Stripe metadata.');
+    if (!uprn || !productId) {
+      throw new Error('Missing UPRN or Product ID in subscription metadata.');
     }
 
     const userId = session.client_reference_id;
@@ -66,24 +64,18 @@ export async function GET(request: NextRequest) {
     }
 
     await db
-      .update(subscriptions)
+      .update(users)
       .set({
         stripeCustomerId: customerId,
-        stripeSubscriptionId: subscriptionId,
-        stripeProductId: productId,
-        planName: product.name,
-        subscriptionStatus: subscription.status,
-        uprn: uprn,
-        updatedAt: new Date(),
       })
-      .where(eq(users.id, user[0].id));
+      .where(eq(users.id, Number(userId)));
 
-    console.log(`Subscription updated for user ${user[0].id} with UPRN: ${uprn}`);
-
+    console.log(`✔ Subscription synced for user ${user[0].stripeCustomerId} with UPRN ${uprn}`);
     await setSession(user[0]);
+
     return NextResponse.redirect(new URL('/dashboard', request.url));
   } catch (error) {
-    console.error('Error handling successful checkout:', error);
+    console.error('❌ Error in Stripe checkout callback:', error);
     return NextResponse.redirect(new URL('/error', request.url));
   }
 }

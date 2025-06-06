@@ -83,7 +83,7 @@ services:
     restart: always
     container_name: pembswastesms.local
     environment:
-      POSTGRES_DB: pembs
+      POSTGRES_DB: pembswaste
       POSTGRES_USER: wasteadmin
       POSTGRES_PASSWORD: ${dbPassword}
     ports:
@@ -109,7 +109,7 @@ volumes:
 
 async function getPostgresURL(dbPassword: string): Promise<string> {
   await setupDockerPostgres(dbPassword);
-  return `postgres://wasteadmin:${encodeURIComponent(dbPassword)}@localhost:54322/pembs`;
+  return `postgres://wasteadmin:${encodeURIComponent(dbPassword)}@localhost:54322/pembswaste`;
 }
 
 async function getStripeSecretKey(): Promise<string> {
